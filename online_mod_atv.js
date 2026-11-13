@@ -1,4 +1,3 @@
-
 // Apple TV settings patch: exposes existing HDrezka cookie login and proxy controls.
 //25.10.2026 - Fix
 
@@ -1684,7 +1683,7 @@
         var kind = /cloudflare|cf-ray|just a moment/i.test(body) ? 'Cloudflare' : /<html|<!doctype/i.test(body) ? 'HTML' : body ? 'other' : 'empty';
         var proxyHost = (prox || '').replace(/^https?:\/\//, '').split('/')[0];
         var siteHost = (host || '').replace(/^https?:\/\//, '').split('/')[0];
-        return 'HDrezka DIAG-4 | ' + stage + ' | HTTP ' + (a && a.status || 0) + ' | site=' + siteHost + ' | proxy=' + (proxyHost || 'OFF') + ' | response=' + kind;
+        return 'HDrezka DIAG-3 | ' + stage + ' | HTTP ' + (a && a.status || 0) + ' | site=' + siteHost + ' | proxy=' + (proxyHost || 'OFF') + ' | response=' + kind;
       }
 
       var embed = ref;
@@ -2744,17 +2743,14 @@
 
         if (cookieHeaders && cookieHeaders.forEach) {
           cookieHeaders.forEach(function (param) {
-            var pair = param.split(';')[0];
-              var separator = pair.indexOf('=');
-              if (separator < 1) return;
-              var parts = [pair.slice(0, separator), pair.slice(separator + 1)];
+            var parts = param.split(';')[0].split('=');
 
             if (parts[0]) {
               if (parts[1] === 'deleted') delete values[parts[0]];else values[parts[0]] = parts[1] || '';
             }
           });
           sid = values['PHPSESSID'];
-
+          delete values['PHPSESSID'];
           var cookies = [];
 
           for (var name in values) {
@@ -2792,17 +2788,14 @@
 
             if (cookieHeaders && cookieHeaders.forEach) {
               cookieHeaders.forEach(function (param) {
-                var pair = param.split(';')[0];
-              var separator = pair.indexOf('=');
-              if (separator < 1) return;
-              var parts = [pair.slice(0, separator), pair.slice(separator + 1)];
+                var parts = param.split(';')[0].split('=');
 
                 if (parts[0]) {
                   if (parts[1] === 'deleted') delete values[parts[0]];else values[parts[0]] = parts[1] || '';
                 }
               });
               sid = values['PHPSESSID'] || sid;
-
+              delete values['PHPSESSID'];
               var _cookies = [];
 
               for (var _name in values) {
@@ -2867,17 +2860,14 @@
 
                   if (cookieHeaders && cookieHeaders.forEach) {
                     cookieHeaders.forEach(function (param) {
-                      var pair = param.split(';')[0];
-              var separator = pair.indexOf('=');
-              if (separator < 1) return;
-              var parts = [pair.slice(0, separator), pair.slice(separator + 1)];
+                      var parts = param.split(';')[0].split('=');
 
                       if (parts[0]) {
                         if (parts[1] === 'deleted') delete values[parts[0]];else values[parts[0]] = parts[1] || '';
                       }
                     });
                     sid = values['PHPSESSID'] || sid;
-
+                    delete values['PHPSESSID'];
                     var _cookies3 = [];
 
                     for (var _name3 in values) {
