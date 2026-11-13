@@ -1,4 +1,3 @@
-
 // Apple TV settings patch: exposes existing HDrezka cookie login and proxy controls.
 //25.10.2026 - Fix
 
@@ -1647,16 +1646,16 @@
       var rezka2_prx_ukr = '//' + (Lampa.Storage.field('online_mod_rezka2_prx_ukr') || 'prx.ukrtelcdn.net') + '/';
       var use_stream_proxy = Lampa.Storage.field('online_mod_use_stream_proxy') === true;
       var rezka2_fix_stream = Lampa.Storage.field('online_mod_rezka2_fix_stream') === true;
-      var prox = component.proxy('rezka2');
+      var prox = ''; // Direct transport for HDrezka
       var host = prox && !proxy_mirror ? Utils.rezka2Host() : Utils.rezka2Mirror();
       var ref = host + '/';
       var logged_in = !(prox || Lampa.Platform.is('android'));
       var user_agent = Utils.baseUserAgent();
-      var headers = Lampa.Platform.is('android') ? {
+      var headers = {
         'Origin': host,
         'Referer': ref,
         'User-Agent': user_agent
-      } : {};
+      };
       var prox_enc = '';
 
       if (prox) {
@@ -1669,7 +1668,7 @@
       if (cookie.indexOf('PHPSESSID=') == -1) cookie = 'PHPSESSID=' + Utils.randomId(26) + (cookie ? '; ' + cookie : '');
 
       if (cookie) {
-        if (Lampa.Platform.is('android')) {
+        if (cookie) {
           headers.Cookie = cookie;
         }
 
@@ -1684,7 +1683,7 @@
         var kind = /cloudflare|cf-ray|just a moment/i.test(body) ? 'Cloudflare' : /<html|<!doctype/i.test(body) ? 'HTML' : body ? 'other' : 'empty';
         var proxyHost = (prox || '').replace(/^https?:\/\//, '').split('/')[0];
         var siteHost = (host || '').replace(/^https?:\/\//, '').split('/')[0];
-        return 'HDrezka DIAG-4 | ' + stage + ' | HTTP ' + (a && a.status || 0) + ' | site=' + siteHost + ' | proxy=' + (proxyHost || 'OFF') + ' | response=' + kind;
+        return 'HDrezka DIRECT-5 | ' + stage + ' | HTTP ' + (a && a.status || 0) + ' | site=' + siteHost + ' | proxy=' + (proxyHost || 'OFF') + ' | response=' + kind;
       }
 
       var embed = ref;
@@ -2698,12 +2697,12 @@
     }
 
     function rezka2FillCookie(success, error) {
-      var prox = Utils.proxy('rezka2');
+      var prox = ''; // Direct login, no proxy fallback
       var prox_enc = '';
-      var returnHeaders = Lampa.Platform.is('android') && Utils.checkAndroidVersion(339);
+      var returnHeaders = true;
       var proxy_mirror = Lampa.Storage.field('online_mod_proxy_rezka2_mirror') === true;
       var host = prox && !proxy_mirror ? Utils.rezka2Host() : Utils.rezka2Mirror();
-      if (!prox && !returnHeaders) prox = Utils.proxy('cookie');
+
 
       if (!prox && !returnHeaders) {
         if (error) error();
@@ -2711,9 +2710,9 @@
       }
 
       var user_agent = Utils.baseUserAgent();
-      var headers = Lampa.Platform.is('android') ? {
+      var headers = {
         'User-Agent': user_agent
-      } : {};
+      };
 
       if (prox) {
         prox_enc += 'param/User-Agent=' + encodeURIComponent(user_agent) + '/';
@@ -2728,6 +2727,11 @@
       network$3.clear();
       network$3.timeout(8000);
       network$3["native"](Utils.proxyLink(url, prox, prox_enc, 'enc2t'), function (json) {
+        if (!json || !json.headers || !Object.prototype.hasOwnProperty.call(json, 'body')) {
+          Lampa.Noty.show('DIRECT-5: приложение не вернуло заголовки ответа. Автозаполнение cookies недоступно этим способом.');
+          if (error) error();
+          return;
+        }
         var cookie = '';
         var values = {};
         var sid = '';
@@ -2890,7 +2894,8 @@
 
                   if (success) success();
                 }, function (a, c) {
-                  if (success) success();
+                  Lampa.Noty.show('DIRECT-5: проверка сессии не выполнена. ' + network$3.errorDecode(a, c));
+                  if (error) error();
                 }, false, {
                   dataType: 'text',
                   headers: headers,
@@ -2902,13 +2907,15 @@
 
             if (success) success();
           }, function (a, c) {
-            if (success) success();
+                  Lampa.Noty.show('DIRECT-5: проверка сессии не выполнена. ' + network$3.errorDecode(a, c));
+                  if (error) error();
           }, false, {
             dataType: 'text',
             headers: headers,
             returnHeaders: returnHeaders
           });
         } else {
+          Lampa.Noty.show('DIRECT-5: ответ входа не содержит доступных cookies Set-Cookie.');
           if (error) error();
         }
       }, function (a, c) {
