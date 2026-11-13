@@ -1,4 +1,3 @@
-
 // Apple TV settings patch: exposes existing HDrezka cookie login and proxy controls.
 //25.10.2026 - Fix
 
@@ -1678,6 +1677,15 @@
         }
       }
 
+
+      function diagnostic(a, stage) {
+        var body = String(a && a.responseText || '');
+        var kind = /cloudflare|cf-ray|just a moment/i.test(body) ? 'Cloudflare' : /<html|<!doctype/i.test(body) ? 'HTML' : body ? 'other' : 'empty';
+        var proxyHost = (prox || '').replace(/^https?:\/\//, '').split('/')[0];
+        var siteHost = (host || '').replace(/^https?:\/\//, '').split('/')[0];
+        return 'HDrezka DIAG-3 | ' + stage + ' | HTTP ' + (a && a.status || 0) + ' | site=' + siteHost + ' | proxy=' + (proxyHost || 'OFF') + ' | response=' + kind;
+      }
+
       var embed = ref;
       var filter_items = {};
       var choice = {
@@ -1787,7 +1795,7 @@
 
             if (callback) callback(data, have_more);
           }, function (a, c) {
-            component.empty(network.errorDecode(a, c));
+            component.empty(diagnostic(a, 'SEARCH_PAGE'));
           }, false, {
             dataType: 'text',
             withCredentials: logged_in,
@@ -1956,7 +1964,7 @@
               checkErrorForm(str);
             }
 
-            if (error_message) component.empty(error_message);else component.empty(network.errorDecode(a, c));
+            if (error_message) component.empty(error_message);else component.empty(diagnostic(a, 'SEARCH_AJAX'));
           }, postdata, {
             dataType: 'text',
             withCredentials: logged_in,
@@ -2032,7 +2040,7 @@
             getEpisodes(success);
           } else if (error_message) component.empty(error_message);else component.emptyForQuery(select_title);
         }, function (a, c) {
-          component.empty(network.errorDecode(a, c));
+          component.empty(diagnostic(a, 'FILM_PAGE'));
         }, false, {
           dataType: 'text',
           withCredentials: logged_in,
@@ -2190,7 +2198,7 @@
                 extractEpisodes(json, translator_id);
                 call();
               }, function (a, c) {
-                component.empty(network.errorDecode(a, c));
+                component.empty(diagnostic(a, 'EPISODES'));
               }, postdata, {
                 withCredentials: logged_in,
                 headers: headers
